@@ -1,0 +1,86 @@
+# Domain keyword lists for perception tagging. User-editable — this file is
+# configuration, not part of the immutable corpus. Highest keyword-hit count
+# wins; if nothing matches, the domain falls back to "personal".
+
+financial:
+  - money
+  - invest
+  - investment
+  - investing
+  - stock
+  - stocks
+  - crypto
+  - budget
+  - buy
+  - sell
+  - purchase
+  - loan
+  - debt
+  - mortgage
+  - rent
+  - salary
+  - savings
+  - spend
+  - spending
+  - price
+  - cost
+  - afford
+  - subscription
+  - insurance
+  - tax
+  - taxes
+
+professional:
+  - job
+  - work
+  - career
+  - boss
+  - manager
+  - team
+  - interview
+  - promotion
+  - startup
+  - business
+  - client
+  - project
+  - build
+  - building
+  - tool
+  - software
+  - app
+  - code
+  - coding
+  - product
+  - launch
+  - ship
+  - side project
+  - freelance
+  - resume
+  - quit
+  - hire
+  - coworker
+  - meeting
+  - deadline
+
+personal:
+  - family
+  - friend
+  - friends
+  - relationship
+  - partner
+  - health
+  - diet
+  - exercise
+  - gym
+  - sleep
+  - habit
+  - hobby
+  - travel
+  - move
+  - moving
+  - apartment
+  - house
+  - kids
+  - parents
+  - therapy
+  - vacation
