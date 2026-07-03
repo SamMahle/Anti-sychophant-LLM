@@ -1,0 +1,8 @@
+# Never commit secrets
+.env
+
+# The corpus lockfile ships absent — the trusted author generates it locally
+memory/corpus/.corpus.lock
+
+__pycache__/
+*.pyc
