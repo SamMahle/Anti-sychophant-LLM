@@ -24,7 +24,24 @@ accountability voice built on one asymmetric rule:
    requires the similar-decision base rate up front, and forbids folding
    under user pressure.
 
-## Setup
+## Quick start (no terminal needed)
+
+1. Install Python 3.11+ once from [python.org/downloads](https://www.python.org/downloads/)
+   (on Windows, tick **"Add python.exe to PATH"** during install).
+2. Download this project (green **Code** button on GitHub → **Download ZIP**)
+   and unzip it anywhere.
+3. Double-click **`start.command`** (Mac) or **`start.bat`** (Windows).
+   The first run sets itself up, then the agent opens in your browser.
+   (On Mac, if it's blocked the first time: right-click → Open.)
+4. The page asks for your Anthropic API key once — get one at
+   [console.anthropic.com](https://console.anthropic.com). It's stored only
+   in a `.env` file on your computer.
+
+From the browser you can chat, log decisions, and record outcomes — no
+terminal commands. Everything below is the equivalent command-line route
+and the trusted-author setup.
+
+## Setup (command line)
 
 ```bash
 pip install -r requirements.txt
@@ -41,6 +58,7 @@ python main.py corpus lock
 ## Usage
 
 ```bash
+python main.py web                   # browser UI (what the start scripts run)
 python main.py chat                  # interactive REPL (default)
 python main.py ask "Should I quit my job to go full-time on this?"
 python main.py pending               # decisions awaiting outcomes

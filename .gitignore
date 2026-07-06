@@ -6,3 +6,6 @@ memory/corpus/.corpus.lock
 
 __pycache__/
 *.pyc
+
+# Local Python environment created by the start scripts
+.venv/

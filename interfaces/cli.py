@@ -119,6 +119,13 @@ def cmd_corpus(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_web(args: argparse.Namespace) -> int:
+    from interfaces.web import run_web
+
+    run_web(port=args.port, open_browser=not args.no_browser)
+    return 0
+
+
 def cmd_heartbeat(args: argparse.Namespace) -> int:
     from heartbeat.scheduler import run_heartbeat
 
@@ -153,6 +160,11 @@ def main(argv: list[str] | None = None) -> int:
     p_corpus = sub.add_parser("corpus", help="corpus lockfile operations")
     p_corpus.add_argument("action", choices=["lock", "verify"])
     p_corpus.set_defaults(func=cmd_corpus)
+
+    p_web = sub.add_parser("web", help="local browser UI")
+    p_web.add_argument("--port", type=int, default=8765)
+    p_web.add_argument("--no-browser", action="store_true", help="don't auto-open the browser")
+    p_web.set_defaults(func=cmd_web)
 
     p_heartbeat = sub.add_parser("heartbeat", help="proactive follow-up loop")
     p_heartbeat.add_argument("--once", action="store_true", help="one pass, then exit")

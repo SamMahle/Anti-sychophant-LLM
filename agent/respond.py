@@ -1,7 +1,8 @@
 """Claude API call: streaming, .env loading, and graceful error handling.
 
-Never tracebacks at the user: every failure path prints one clear message
-to stderr and returns None.
+Never tracebacks at the user: every failure path becomes one clear,
+user-presentable message (RespondError), which the CLI prints to stderr
+and the web UI shows in the page.
 """
 
 from __future__ import annotations
@@ -9,8 +10,13 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from typing import Callable
 
 import anthropic
+
+
+class RespondError(RuntimeError):
+    """API call failed; str(exc) is a user-presentable message."""
 
 
 def load_dotenv(root: str | Path) -> None:
@@ -32,27 +38,24 @@ def load_dotenv(root: str | Path) -> None:
             os.environ.setdefault(key, value)
 
 
-def _err(message: str) -> None:
-    print(f"error: {message}", file=sys.stderr)
-
-
-def respond(
+def generate(
     system_prompt: str,
     conversation: list[dict],
     model: str = "claude-sonnet-4-6",
     max_tokens: int = 2000,
-) -> str | None:
-    """Stream a reply from Claude to stdout; return the full text, or None.
+    on_token: Callable[[str], None] | None = None,
+) -> str:
+    """Stream a reply from Claude; return the full text.
 
+    Raises RespondError with a user-presentable message on any failure.
     `conversation` is the running message list for multi-turn chat; the
     latest user message must already be appended by the caller.
     """
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        _err(
+        raise RespondError(
             "ANTHROPIC_API_KEY is not set. Export it or put it in a .env file "
             "at the project root (see .env.example)."
         )
-        return None
 
     client = anthropic.Anthropic()
     try:
@@ -63,16 +66,43 @@ def respond(
             messages=conversation,
         ) as stream:
             for token in stream.text_stream:
-                sys.stdout.write(token)
-                sys.stdout.flush()
-            sys.stdout.write("\n")
+                if on_token is not None:
+                    on_token(token)
             return stream.get_final_text()
     except anthropic.AuthenticationError:
-        _err("authentication failed — check that ANTHROPIC_API_KEY is valid.")
+        raise RespondError(
+            "authentication failed — check that ANTHROPIC_API_KEY is valid."
+        ) from None
     except anthropic.RateLimitError:
-        _err("rate limited by the API — wait a moment and try again.")
+        raise RespondError(
+            "rate limited by the API — wait a moment and try again."
+        ) from None
     except anthropic.APIConnectionError:
-        _err("could not reach the Claude API — check your network connection.")
+        raise RespondError(
+            "could not reach the Claude API — check your network connection."
+        ) from None
     except anthropic.APIStatusError as exc:
-        _err(f"API returned status {exc.status_code} — {exc.message}")
-    return None
+        raise RespondError(
+            f"API returned status {exc.status_code} — {exc.message}"
+        ) from None
+
+
+def respond(
+    system_prompt: str,
+    conversation: list[dict],
+    model: str = "claude-sonnet-4-6",
+    max_tokens: int = 2000,
+) -> str | None:
+    """CLI wrapper around generate(): stream to stdout, return text or None."""
+
+    def to_stdout(token: str) -> None:
+        sys.stdout.write(token)
+        sys.stdout.flush()
+
+    try:
+        text = generate(system_prompt, conversation, model, max_tokens, to_stdout)
+        sys.stdout.write("\n")
+        return text
+    except RespondError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return None

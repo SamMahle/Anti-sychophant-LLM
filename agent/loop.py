@@ -50,8 +50,13 @@ class AgentLoop:
         """Startup integrity check against the trusted author's lockfile."""
         return update.verify_corpus(self.corpus_dir, self.corpus_lock)
 
-    def handle(self, text: str) -> dict:
-        """Run stages 2-5 for one user message."""
+    def handle(self, text: str, quiet: bool = False) -> dict:
+        """Run stages 2-5 for one user message.
+
+        quiet=True (web UI): no stdout streaming; failures come back as a
+        user-presentable message in the result's "error" key instead of
+        being printed to stderr.
+        """
         perception = perceive_mod.perceive(text, self.domains)
         chunks = self.retriever.query(text, perception.domain)
         stats = self.retriever.similar_decision_stats(text, perception.domain)
@@ -64,12 +69,25 @@ class AgentLoop:
         )
 
         self.conversation.append({"role": "user", "content": text})
-        reply = respond_mod.respond(
-            system_prompt=system_prompt,
-            conversation=self.conversation,
-            model=self.settings["model"]["name"],
-            max_tokens=self.settings["model"]["max_tokens"],
-        )
+        error = None
+        if quiet:
+            try:
+                reply = respond_mod.generate(
+                    system_prompt=system_prompt,
+                    conversation=self.conversation,
+                    model=self.settings["model"]["name"],
+                    max_tokens=self.settings["model"]["max_tokens"],
+                )
+            except respond_mod.RespondError as exc:
+                reply = None
+                error = str(exc)
+        else:
+            reply = respond_mod.respond(
+                system_prompt=system_prompt,
+                conversation=self.conversation,
+                model=self.settings["model"]["name"],
+                max_tokens=self.settings["model"]["max_tokens"],
+            )
         if reply is None:
             # Failed call: drop the dangling user turn so the session stays valid.
             self.conversation.pop()
@@ -81,6 +99,7 @@ class AgentLoop:
             "chunks": chunks,
             "stats": stats,
             "reply": reply,
+            "error": error,
         }
 
     # ------------------------------------------------------------------
